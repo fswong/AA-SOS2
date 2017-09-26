@@ -2,7 +2,6 @@ package mazeGenerator;
 
 import java.util.*;
 import maze.Maze;
-import MyTree;
 
 public class RecursiveBacktrackerGenerator implements MazeGenerator {
 
@@ -13,13 +12,21 @@ public class RecursiveBacktrackerGenerator implements MazeGenerator {
 	public int scR; //starting row
 	public int srC; //starting cloumn
 	public Node rootNode;
-	public int currR; //current row
-	public int currC; //current column
+	public Integer currR; //current row
+	public Integer currC; //current column
 	public Node currNode;
-	public HashMap visited = new HashMap();
-	public HashMap neighboured = new HashMap();
-	public HashMap routes = new HashMap();
+	public Node nextNode;
+	public Node prevNode = null;
+	public HashMap<String, Object> visited = new HashMap<String, Object>();
+	public HashMap<String, Node> neighboured = new HashMap<String, Node>();
+	public int counter=0; //to test if all are visited
 
+	Random rand = new Random();
+	
+	//to not create so many objects
+	public String key = "";
+	public Node test = new Node(null,"");
+	
 	@Override
 	public void generateMaze(Maze maze) {
 		// TODO Auto-generated method stub
@@ -41,7 +48,6 @@ public class RecursiveBacktrackerGenerator implements MazeGenerator {
 		*/
 		
 		//picking starting cell
-		Random rand = new Random();
 		this.scR = rand.nextInt(maxRows);
 		this.srC = rand.nextInt(maxColumns);
 		
@@ -61,9 +67,9 @@ public class RecursiveBacktrackerGenerator implements MazeGenerator {
 		//set the root node
 		rootNode = new Node(null,createElement(this.currR, this.currC));
 		currNode = rootNode;
+		nextNode = new Node(rootNode,createElement(this.currR, this.currC));
 		
-		//find the neighbours
-		getNeighbours();
+		traverse();
 		
 		//move next
 		
@@ -82,52 +88,118 @@ public class RecursiveBacktrackerGenerator implements MazeGenerator {
 		check that it is not already in the neighbours and that it not already visited
 		if pass the test add to the list
 		*/
-		for(int i;i<maze.NUM_DIR;i++){
-			//if the location is not empty and is not already visited or neighboured
+		
+		for(int i=0;i<maze.NUM_DIR;i++){
 			if (maze.map[this.currR][this.currC].neigh[i] != null) {
+				//System.out.println("i "+i);
 				
-				routes.put(createElement(int x, int y),node);
-				Node node = new node();
+				//check if the cell is not doubled up
+				key = createElement(maze.map[this.currR][this.currC].neigh[i].r,maze.map[this.currR][this.currC].neigh[i].c);
+				test = neighboured.get(key);
+
+				if(test != null){
+					//dont add
+					System.out.println("no add "+maze.map[this.currR][this.currC].neigh[i].r+","+maze.map[this.currR][this.currC].neigh[i].c);
+				}else{
+					//add to the neighboured list
+					//check that the cell is not already neighboured
+					System.out.println("add "+maze.map[this.currR][this.currC].neigh[i].r+","+maze.map[this.currR][this.currC].neigh[i].c);
+					Node node = new Node(this.currNode,createElement((Integer)maze.map[this.currR][this.currC].neigh[i].r,(Integer)maze.map[this.currR][this.currC].neigh[i].c));
+					this.currNode.children.add(node);
+					
+					neighboured.put(createElement(this.currR,this.currC),this.currNode);
+				}
+				
+				
 			}
 		}
 		
 	}
 	
 	public void traverse(){
-		//if all children have been visited, move back
-		for(){
+		this.counter++;
+		//System.out.println("Counter " + this.counter);
+		System.out.println("Visited: " + this.currNode.element);
+		getNeighbours();
+		
+		if(this.currNode.children.size()>0){
+			System.out.println("Moving forward");
+			
+			//pick a random child
+			this.nextNode = this.currNode.children.get(rand.nextInt(this.currNode.children.size()));
+
+			/*
+			record the node
+			move next
+			delete from the to visit list
+			*/
+			this.prevNode = this.currNode;
+			this.currNode = this.nextNode;
+			this.prevNode.removeChild(this.currNode);
+			
+			setCurrCell(this.currNode.element);
+			//log movement
+			visited.put(createElement(this.currR,this.currC),this.currNode);
+			traverse();
+		}else{
+			System.out.println("Moving backward");
+			//no child then move back
+			
+			//check if it is the root
+			if(this.currNode.parent == this.rootNode){
+				//end of recursion
+			}else{
+				//backtrack
+				this.currNode = this.currNode.parent;
+				traverse();
+			}
 			
 		}
 	}
 	
-	//visit the next cell
-	public void moveNext(){
-		routes.put(createElement(int x, int y),node);
-	}
-	
-	public String createElement(int x, int y){
-		String outputString = this.currC.toString()+","+this.currR.toString();
+	public String createElement(Integer x, Integer y){
+		String outputString = x+","+y;
 		return outputString;
 	}
 	
 	public void setCurrCell(String element){
 		String[] strSplitter = element.split(",");
-		this.currC = strSplitter[0];
-		this.currR = strSplitter[1];
+		this.currC = Integer.parseInt(strSplitter[0]);
+		this.currR = Integer.parseInt(strSplitter[1]);
 	}
 	
 	public class Node {
-		public T element;
+		public String element;
 		public Node parent;
-		public List<Node> children;
+		public ArrayList<Node> children;
 		
-		public Node(Node parent,T element){
+		public Node(Node parent,String element){
 			this.parent=parent;
 			this.element=element;
+			this.children = new ArrayList<Node>();
 		}
 		
 		public void addChild(Node newChild){
 			this.children.add(newChild);
+		}
+		
+		public void removeChild(Node currChild){
+			Iterator<Node> childlist = children.iterator();
+			
+			while (childlist.hasNext()) {
+				if (childlist.next() == currChild) {
+					childlist.remove();
+					break;
+				}
+			}
+			
+			childlist = null;
+			/*for (Node thisChild : this.currNode.children) {
+                if(thisChild == currChild){
+					thisChild.remove();
+					break;
+				}
+            }*/
 		}
 	}
 
