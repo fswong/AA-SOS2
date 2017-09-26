@@ -65,24 +65,16 @@ public class RecursiveBacktrackerGenerator implements MazeGenerator {
 		this.currR = this.srC;
 		
 		//set the root node
-		rootNode = new Node(null,createElement(this.currR, this.currC));
-		currNode = rootNode;
-		nextNode = new Node(rootNode,createElement(this.currR, this.currC));
+		this.rootNode = new Node(null,createElement(this.currR, this.currC));
+		getNeighbours(this.rootNode);
+		this.currNode = rootNode;
+		this.nextNode = new Node(rootNode,createElement(this.currR, this.currC));
 		
-		traverse();
-		
-		//move next
-		
-		
-		
-		
-		
-		
-
+		traverse("forward");
 	} // end of generateMaze()
 	
 	//get the neighbours
-	public void getNeighbours(){
+	public void getNeighbours(Node thisNode){
 		/*
 		loop through the cell to find the neighbours
 		check that it is not already in the neighbours and that it not already visited
@@ -99,40 +91,37 @@ public class RecursiveBacktrackerGenerator implements MazeGenerator {
 
 				if(test != null){
 					//dont add
-					System.out.println("no add "+maze.map[this.currR][this.currC].neigh[i].r+","+maze.map[this.currR][this.currC].neigh[i].c);
+					//System.out.println("no add "+maze.map[this.currR][this.currC].neigh[i].r+","+maze.map[this.currR][this.currC].neigh[i].c);
 				}else{
 					//add to the neighboured list
 					//check that the cell is not already neighboured
-					System.out.println("add "+maze.map[this.currR][this.currC].neigh[i].r+","+maze.map[this.currR][this.currC].neigh[i].c);
-					Node node = new Node(this.currNode,createElement((Integer)maze.map[this.currR][this.currC].neigh[i].r,(Integer)maze.map[this.currR][this.currC].neigh[i].c));
+					//System.out.println("add "+maze.map[this.currR][this.currC].neigh[i].r+","+maze.map[this.currR][this.currC].neigh[i].c + " key " + key);
+					/*Node node = new Node(this.currNode,createElement((Integer)maze.map[this.currR][this.currC].neigh[i].r,(Integer)maze.map[this.currR][this.currC].neigh[i].c));
 					this.currNode.children.add(node);
 					
-					neighboured.put(createElement(this.currR,this.currC),this.currNode);
+					neighboured.put(key,this.currNode);*/
+					Node node = new Node(thisNode,createElement((Integer)maze.map[this.currR][this.currC].neigh[i].r,(Integer)maze.map[this.currR][this.currC].neigh[i].c));
+					thisNode.children.add(node);
+					
+					neighboured.put(key,thisNode);
 				}
-				
-				
 			}
 		}
 		
 	}
 	
-	public void traverse(){
+	public void traverse(String action){
 		this.counter++;
 		//System.out.println("Counter " + this.counter);
 		System.out.println("Visited: " + this.currNode.element);
-		getNeighbours();
+		if(action.equals("forward")){getNeighbours(this.currNode);}
 		
-		if(this.currNode.children.size()>0){
+		/*if(this.currNode.children.size()>0){
 			System.out.println("Moving forward");
 			
 			//pick a random child
 			this.nextNode = this.currNode.children.get(rand.nextInt(this.currNode.children.size()));
 
-			/*
-			record the node
-			move next
-			delete from the to visit list
-			*/
 			this.prevNode = this.currNode;
 			this.currNode = this.nextNode;
 			this.prevNode.removeChild(this.currNode);
@@ -140,7 +129,7 @@ public class RecursiveBacktrackerGenerator implements MazeGenerator {
 			setCurrCell(this.currNode.element);
 			//log movement
 			visited.put(createElement(this.currR,this.currC),this.currNode);
-			traverse();
+			traverse("forward");
 		}else{
 			System.out.println("Moving backward");
 			//no child then move back
@@ -151,10 +140,38 @@ public class RecursiveBacktrackerGenerator implements MazeGenerator {
 			}else{
 				//backtrack
 				this.currNode = this.currNode.parent;
-				traverse();
+				traverse("backward");
 			}
 			
+		}*/
+		
+		Iterator it=this.currNode.children.iterator();
+		
+		while(it.hasNext()){
+			System.out.println("Moving forward");
+			
+			//pick a random child
+			this.nextNode = this.currNode.children.get(rand.nextInt(this.currNode.children.size()));
+			this.prevNode = this.currNode;
+			this.currNode = this.nextNode;
+			this.prevNode.removeChild(this.currNode);
+			
+			setCurrCell(this.currNode.element);
+			//log movement
+			visited.put(createElement(this.currR,this.currC),this.currNode);
+			traverse("forward");
 		}
+		
+		if(this.currNode.parent == null){
+			System.out.println("We are done!");
+		}else if(this.currNode.parent != this.rootNode){
+			this.currNode = this.currNode.parent;
+			System.out.println("Back To: " + this.currNode.element);
+		}else {
+			this.currNode = this.currNode.parent;
+			System.out.println("We are home");
+		}
+		
 	}
 	
 	public String createElement(Integer x, Integer y){
@@ -193,7 +210,7 @@ public class RecursiveBacktrackerGenerator implements MazeGenerator {
 				}
 			}
 			
-			childlist = null;
+			//childlist = null;
 			/*for (Node thisChild : this.currNode.children) {
                 if(thisChild == currChild){
 					thisChild.remove();
