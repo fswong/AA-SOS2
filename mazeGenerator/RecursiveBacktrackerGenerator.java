@@ -1,43 +1,26 @@
 package mazeGenerator;
 
 import java.util.*;
+
+import maze.Cell;
 import maze.Maze;
 
 public class RecursiveBacktrackerGenerator implements MazeGenerator {
-
-	//properties
-	public Maze maze;
-	public int maxRows; //based on maze size
-	public int maxColumns;
-	public int scR; //starting row
-	public int srC; //starting cloumn
-	public Node rootNode;
-	public Integer currR; //current row
-	public Integer currC; //current column
-	public Node currNode;
-	public Node nextNode;
-	public Node prevNode = null;
-	public HashMap<String, Object> visited = new HashMap<String, Object>();
-	public HashMap<String, Node> neighboured = new HashMap<String, Node>();
-	public int counter=0; //to test if all are visited
-
+	
 	Random rand = new Random();
 	
-	//to not create so many objects
-	public String key = "";
-	public Node test = new Node(null,"");
+	//attributes
+	int maxRows;
+	int maxColumns;
+	
+	boolean[][] visited; //this stores visited cells
 	
 	@Override
 	public void generateMaze(Maze maze) {
-		// TODO Auto-generated method stub
-		this.maze = maze;
-		
 		this.maxRows = maze.sizeR;
 		this.maxColumns = maze.sizeC;
 		/*
 		1. Randomly pick a starting cell.
-		sizeR
-		sizeC
 		2. Pick a random unvisited neighbouring cell and move to that neighbour. In the process, carve a
 			path (i.e, remove the wall) between the cells.
 		3. Continue this process until we reach a cell that has no unvisited neighbours. In that case,
@@ -47,177 +30,55 @@ public class RecursiveBacktrackerGenerator implements MazeGenerator {
 			and we have generated a perfect maze.
 		*/
 		
-		//picking starting cell
-		this.scR = rand.nextInt(maxRows);
-		this.srC = rand.nextInt(maxColumns);
+		//coordinates for hex is c+(r-1)? no harm having more
+		this.visited = new boolean[maze.sizeR][maze.sizeC + maze.sizeR];
 		
-		//begin generating
-		/* 
-		set the current cell
-		get the cells neighbours
-		add the cells to an array
-		visit a random cell
-		*/
-		//maze.map[scR][srC];
+		//1. Randomly pick a starting cell
+		int startRow = rand.nextInt(maze.sizeR);
+		int startCol = rand.nextInt(maze.sizeC);
+		Cell start = new Cell();
+		start = maze.map[startRow][startCol];
 		
-		//begin
-		this.currC = this.scR;
-		this.currR = this.srC;
-		
-		//set the root node
-		this.rootNode = new Node(null,createElement(this.currR, this.currC));
-		getNeighbours(this.rootNode);
-		this.currNode = rootNode;
-		this.nextNode = new Node(rootNode,createElement(this.currR, this.currC));
-		
-		traverse("forward");
+		//begin recursion
+		traverse(start,maze);
 	} // end of generateMaze()
 	
-	//get the neighbours
-	public void getNeighbours(Node thisNode){
-		/*
-		loop through the cell to find the neighbours
-		check that it is not already in the neighbours and that it not already visited
-		if pass the test add to the list
-		*/
+	public void traverse(Cell from,Maze maze){
+		//we have visited this cell!
+		this.visited[from.r][from.c] = true;
 		
-		for(int i=0;i<maze.NUM_DIR;i++){
-			if (maze.map[this.currR][this.currC].neigh[i] != null) {
-				//System.out.println("i "+i);
-				
-				//check if the cell is not doubled up
-				key = createElement(maze.map[this.currR][this.currC].neigh[i].r,maze.map[this.currR][this.currC].neigh[i].c);
-				test = neighboured.get(key);
-
-				if(test != null){
-					//dont add
-					//System.out.println("no add "+maze.map[this.currR][this.currC].neigh[i].r+","+maze.map[this.currR][this.currC].neigh[i].c);
-				}else{
-					//add to the neighboured list
-					//check that the cell is not already neighboured
-					//System.out.println("add "+maze.map[this.currR][this.currC].neigh[i].r+","+maze.map[this.currR][this.currC].neigh[i].c + " key " + key);
-					/*Node node = new Node(this.currNode,createElement((Integer)maze.map[this.currR][this.currC].neigh[i].r,(Integer)maze.map[this.currR][this.currC].neigh[i].c));
-					this.currNode.children.add(node);
-					
-					neighboured.put(key,this.currNode);*/
-					Node node = new Node(thisNode,createElement((Integer)maze.map[this.currR][this.currC].neigh[i].r,(Integer)maze.map[this.currR][this.currC].neigh[i].c));
-					thisNode.children.add(node);
-					
-					neighboured.put(key,thisNode);
-				}
-			}
+		//check for tunnels
+		if ((maze.type == 1) && (from.tunnelTo != null) && (!visited[from.tunnelTo.r][from.tunnelTo.c])) {
+			traverse(from.tunnelTo,maze);
 		}
 		
-	}
+		//2. Pick a random unvisited neighbouring cell
+		int[] toVisit = randomize();
+		
+		for (int i = 0; i < 6; i++) {
+			//set the next cell to visit
+			Cell to = from.neigh[toVisit[i]];
+			
+			//If not out of bounds and is not visited traverse and break the wall
+			if ((to != null) && (!visited[to.r][to.c])) {
+				from.wall[toVisit[i]].present = false;
+				traverse(to,maze);
+			}else{/*do nothing*/}
+		}
+	} // end of traverse()
 	
-	public void traverse(String action){
-		this.counter++;
-		//System.out.println("Counter " + this.counter);
-		System.out.println("Visited: " + this.currNode.element);
-		if(action.equals("forward")){getNeighbours(this.currNode);}
-		
-		/*if(this.currNode.children.size()>0){
-			System.out.println("Moving forward");
-			
-			//pick a random child
-			this.nextNode = this.currNode.children.get(rand.nextInt(this.currNode.children.size()));
-
-			this.prevNode = this.currNode;
-			this.currNode = this.nextNode;
-			this.prevNode.removeChild(this.currNode);
-			
-			setCurrCell(this.currNode.element);
-			//log movement
-			visited.put(createElement(this.currR,this.currC),this.currNode);
-			traverse("forward");
-		}else{
-			System.out.println("Moving backward");
-			//no child then move back
-			
-			//check if it is the root
-			if(this.currNode.parent == this.rootNode){
-				//end of recursion
-			}else{
-				//backtrack
-				this.currNode = this.currNode.parent;
-				traverse("backward");
-			}
-			
-		}*/
-		
-		Iterator it=this.currNode.children.iterator();
-		
-		while(it.hasNext()){
-			System.out.println("Moving forward");
-			
-			//pick a random child
-			this.nextNode = this.currNode.children.get(rand.nextInt(this.currNode.children.size()));
-			this.prevNode = this.currNode;
-			this.currNode = this.nextNode;
-			this.prevNode.removeChild(this.currNode);
-			
-			setCurrCell(this.currNode.element);
-			//log movement
-			visited.put(createElement(this.currR,this.currC),this.currNode);
-			traverse("forward");
+	//store the directions so that all directions are visited 
+	public int[] randomize(){
+		int[] randomized = new int[6];
+		ArrayList<Integer> toAdd = new ArrayList<Integer>();
+		for(int i=0;i<6;i++){
+			toAdd.add(i);
 		}
-		
-		if(this.currNode.parent == null){
-			System.out.println("We are done!");
-		}else if(this.currNode.parent != this.rootNode){
-			this.currNode = this.currNode.parent;
-			System.out.println("Back To: " + this.currNode.element);
-		}else {
-			this.currNode = this.currNode.parent;
-			System.out.println("We are home");
+		for(int i=0;i<6;i++){
+			int remove = rand.nextInt(toAdd.size());
+			randomized[i] = toAdd.get(remove);
+			toAdd.remove(remove);
 		}
-		
-	}
-	
-	public String createElement(Integer x, Integer y){
-		String outputString = x+","+y;
-		return outputString;
-	}
-	
-	public void setCurrCell(String element){
-		String[] strSplitter = element.split(",");
-		this.currC = Integer.parseInt(strSplitter[0]);
-		this.currR = Integer.parseInt(strSplitter[1]);
-	}
-	
-	public class Node {
-		public String element;
-		public Node parent;
-		public ArrayList<Node> children;
-		
-		public Node(Node parent,String element){
-			this.parent=parent;
-			this.element=element;
-			this.children = new ArrayList<Node>();
-		}
-		
-		public void addChild(Node newChild){
-			this.children.add(newChild);
-		}
-		
-		public void removeChild(Node currChild){
-			Iterator<Node> childlist = children.iterator();
-			
-			while (childlist.hasNext()) {
-				if (childlist.next() == currChild) {
-					childlist.remove();
-					break;
-				}
-			}
-			
-			//childlist = null;
-			/*for (Node thisChild : this.currNode.children) {
-                if(thisChild == currChild){
-					thisChild.remove();
-					break;
-				}
-            }*/
-		}
-	}
-
+		return randomized;
+	}// end of randomize()
 } // end of class RecursiveBacktrackerGenerator
