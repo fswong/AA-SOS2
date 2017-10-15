@@ -31,20 +31,24 @@ public class RecursiveBacktrackerGenerator implements MazeGenerator {
 		*/
 		
 		//coordinates for hex is c+(r-1)? no harm having more
-		this.visited = new boolean[maze.sizeR][maze.sizeC + maze.sizeR];
+		this.visited = new boolean[maze.sizeR][maze.sizeC + (maze.sizeR + 1) / 2];
 		
 		//1. Randomly pick a starting cell
 		int startRow = rand.nextInt(maze.sizeR);
 		int startCol = rand.nextInt(maze.sizeC);
 		Cell start = new Cell();
+		//for the coordinate system for the hex
+		if (maze.type == 2) {
+			startCol = rand.nextInt(maze.sizeC - (maze.sizeR + 1) / 2) + (startRow + 1) / 2;
+		}
 		start = maze.map[startRow][startCol];
-		
 		//begin recursion
 		traverse(start,maze);
 	} // end of generateMaze()
 	
 	public void traverse(Cell from,Maze maze){
 		//we have visited this cell!
+		//System.out.println(from.r + "//" + from.c);
 		this.visited[from.r][from.c] = true;
 		
 		//check for tunnels

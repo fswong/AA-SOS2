@@ -31,6 +31,10 @@ public class ModifiedPrimsGenerator implements MazeGenerator {
 		//1. Randomly pick a starting cell and add it to set Z
 		int startRow = rand.nextInt(maze.sizeR);
 		int startCol = rand.nextInt(maze.sizeC);
+		//for the coordinate system for the hex
+		if (maze.type == 2) {
+			startCol = rand.nextInt(maze.sizeC - (maze.sizeR + 1) / 2) + (startRow + 1) / 2;
+		}
 		Cell start = new Cell();
 		start = maze.map[startRow][startCol];
 		Z.add(start);

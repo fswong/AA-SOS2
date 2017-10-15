@@ -27,12 +27,17 @@ public class GrowingTreeGenerator implements MazeGenerator {
 		*/
 		
 		//coordinates for hex is c+(r-1)? no harm having more
-		visited = new boolean[maze.sizeR][maze.sizeC + maze.sizeR];
+		this.visited = new boolean[maze.sizeR][maze.sizeC + (maze.sizeR + 1) / 2];
 		
 		//1. Randomly pick a starting cell and add it to set Z
 		int startRow = rand.nextInt(maze.sizeR);
 		int startCol = rand.nextInt(maze.sizeC);
 		Cell start = new Cell();
+		//for the coordinate system for the hex
+		if (maze.type == 2) {
+			startCol = rand.nextInt(maze.sizeC - (maze.sizeR + 1) / 2) + (startRow + 1) / 2;
+		}
+		
 		start = maze.map[startRow][startCol];
 
 		//begin
